@@ -10,9 +10,11 @@ import {
 import { HomeIcon } from '@heroicons/react/solid'
 
 import { signIn, signOut, useSession } from 'next-auth/react'
+import { useRouter } from 'next/router'
 
 const Header = () => {
   const { data: session } = useSession() //session => just renaming the data object we get
+  const router = useRouter()
 
   console.log(session)
   return (
@@ -21,6 +23,7 @@ const Header = () => {
         {/* Left */}
         <div className="relative hidden w-24 cursor-pointer lg:inline-grid">
           <Image
+            onClick={() => router.push('/')}
             src="https://links.papareact.com/ocw"
             layout="fill"
             objectFit="contain"
@@ -29,6 +32,7 @@ const Header = () => {
 
         <div className="relative w-10 flex-shrink-0 cursor-pointer lg:hidden">
           <Image
+            onClick={() => router.push('/')}
             src="https://links.papareact.com/jjm"
             layout="fill"
             objectFit="contain"
@@ -52,7 +56,7 @@ const Header = () => {
 
         {/* Right */}
         <div className="flex items-center justify-end space-x-4">
-          <HomeIcon className="navBtn" />
+          <HomeIcon onClick={() => router.push('/')} className="navBtn" />
           <MenuIcon className="h-6 cursor-pointer md:hidden" />
 
           {session ? (
