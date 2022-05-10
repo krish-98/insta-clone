@@ -9,7 +9,12 @@ import {
 } from '@heroicons/react/outline'
 import { HomeIcon } from '@heroicons/react/solid'
 
+import { signIn, signOut, useSession } from 'next-auth/react'
+
 const Header = () => {
+  const { data: session } = useSession() //session => just renaming the data object we get
+
+  console.log(session)
   return (
     <div className="sticky top-0 z-50 border-b bg-white shadow-sm">
       <div className="mx-5 flex max-w-6xl justify-between lg:mx-auto">
@@ -50,21 +55,28 @@ const Header = () => {
           <HomeIcon className="navBtn" />
           <MenuIcon className="h-6 cursor-pointer md:hidden" />
 
-          <div className="navBtn relative">
-            <PaperAirplaneIcon className="navBtn rotate-45" />
-            <div className="absolute -top-1 -right-2  flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs text-white">
-              3
-            </div>
-          </div>
-          <PlusCircleIcon className="navBtn" />
-          <UserGroupIcon className="navBtn" />
-          <HeartIcon className="navBtn" />
+          {session ? (
+            <>
+              <div className="navBtn relative">
+                <PaperAirplaneIcon className="navBtn rotate-45" />
+                <div className="absolute -top-1 -right-2  flex h-5 w-5 animate-pulse items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                  3
+                </div>
+              </div>
+              <PlusCircleIcon className="navBtn" />
+              <UserGroupIcon className="navBtn" />
+              <HeartIcon className="navBtn" />
 
-          <img
-            className="h-10 cursor-pointer rounded-full"
-            src="https://muralikrishnan.netlify.app/assets/pro.7a7ac16e591417165bb41b19aca52620.jpg"
-            alt="profile pic"
-          />
+              <img
+                onClick={signOut}
+                className="h-10 w-10 cursor-pointer rounded-full"
+                src={session.user.image}
+                alt="profile pic"
+              />
+            </>
+          ) : (
+            <button onClick={signIn}>Sign In</button>
+          )}
         </div>
       </div>
     </div>

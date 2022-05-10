@@ -14,7 +14,6 @@ const Stories = () => {
     }))
 
     setSuggestions(suggestions)
-    console.log(suggestions)
   }, [])
 
   return (
@@ -26,12 +25,6 @@ const Stories = () => {
           username={profile.name.firstName() + profile.name.lastName()}
         />
       ))}
-      {/* Story */}
-      {/* Story */}
-      {/* Story */}
-      {/* Story */}
-      {/* Story */}
-      {/* Story */}
     </div>
   )
 }
