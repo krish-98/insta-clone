@@ -4,11 +4,56 @@ import { modalState } from '../atoms/modalAtom'
 import { Dialog, Transition } from '@headlessui/react'
 import { CameraIcon } from '@heroicons/react/outline'
 
+import { useSession } from 'next-auth/react'
+import { db, storage } from '../firebase'
+import {
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  updateDoc,
+} from 'firebase/firestore'
+import { getDownloadURL, ref, uploadString } from 'firebase/storage'
+
 const Modal = () => {
+  const { data: session } = useSession()
   const [open, setOpen] = useRecoilState(modalState)
   const filePickerRef = useRef(null)
   const captionRef = useRef(null)
+  const [loading, setLoading] = useState()
   const [selectedFile, setSelectedFile] = useState(null)
+
+  const uploadPost = async () => {
+    if (loading) return
+
+    setLoading(true)
+
+    // Add a new document to the firestore db
+    const docRef = await addDoc(collection(db, 'posts'), {
+      username: session.user.name,
+      caption: captionRef.current.value,
+      profileImg: session.user.image,
+      timestamp: serverTimestamp(),
+    })
+
+    console.log('New doc added with ID', docRef.id)
+
+    const imageRef = ref(storage, `posts/${docRef.id}/image`)
+
+    await uploadString(imageRef, selectedFile, 'data_url').then(
+      async (snapshot) => {
+        const downloadURL = await getDownloadURL(imageRef)
+
+        await updateDoc(doc(db, 'posts', docRef.id), {
+          image: downloadURL,
+        })
+      }
+    )
+
+    setOpen(false)
+    setLoading(false)
+    setSelectedFile(null)
+  }
 
   const addImageToPost = (e) => {
     const reader = new FileReader()
@@ -110,9 +155,11 @@ const Modal = () => {
                 <div className="mt-5 sm:mt-6">
                   <button
                     type="button"
+                    disabled={!selectedFile}
+                    onClick={uploadPost}
                     className="tex-white hover:diabled:bg-gray-300 inline-flex w-full justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-300 sm:text-sm"
                   >
-                    Upload Post
+                    {loading ? 'Uploading...' : 'Upload Post'}
                   </button>
                 </div>
               </div>
