@@ -13,10 +13,13 @@ import { useSession } from 'next-auth/react'
 import {
   addDoc,
   collection,
+  deleteDoc,
+  doc,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
+  setDoc,
 } from 'firebase/firestore'
 import { db } from '../firebase'
 import Moment from 'react-moment'
@@ -25,6 +28,8 @@ const Post = ({ id, username, userImg, img, caption }) => {
   const { data: session } = useSession()
   const [comment, setComment] = useState('')
   const [comments, setComments] = useState([])
+  const [likes, setLikes] = useState([])
+  const [hasliked, setHasLiked] = useState(false)
 
   useEffect(
     () =>
@@ -35,8 +40,33 @@ const Post = ({ id, username, userImg, img, caption }) => {
         ),
         (snapshot) => setComments(snapshot.docs)
       ),
-    [db]
+    [db, id]
   )
+
+  useEffect(
+    () => (
+      onSnapshot(collection(db, 'posts', id, 'likes'), (snapshot) =>
+        setLikes(snapshot.docs)
+      ),
+      [db, id]
+    )
+  )
+
+  useEffect(() => {
+    setHasLiked(
+      likes.findIndex((like) => like.id === session?.user?.uid) !== -1
+    )
+  }, [likes])
+
+  const likePostHandler = async () => {
+    if (hasliked) {
+      await deleteDoc(doc(db, 'posts', id, 'likes', session.user.uid))
+    } else {
+      await setDoc(doc(db, 'posts', id, 'likes', session.user.uid), {
+        username: session.user.username,
+      })
+    }
+  }
 
   const sendCommentHandler = async (e) => {
     e.preventDefault()
@@ -72,7 +102,15 @@ const Post = ({ id, username, userImg, img, caption }) => {
       {session && (
         <div className="flex justify-between px-4 pt-4">
           <div className="flex space-x-4">
-            <HeartIcon className="btn" />
+            {hasliked ? (
+              <HeartIconFilled
+                onClick={likePostHandler}
+                className="btn text-red-500"
+              />
+            ) : (
+              <HeartIcon onClick={likePostHandler} className="btn" />
+            )}
+
             <ChatIcon className="btn" />
             <PaperAirplaneIcon className="btn" />
           </div>
@@ -82,10 +120,14 @@ const Post = ({ id, username, userImg, img, caption }) => {
       )}
 
       {/* Caption */}
-      <p className="truncate p-5">
+      <div className="truncate p-5">
+        {likes.length > 0 && (
+          <p className="mb-1 font-bold">{likes.length} likes</p>
+        )}
+
         <span className="mr-1 font-bold">{username} </span>
         {caption}
-      </p>
+      </div>
 
       {/* Comments */}
       {comments.length > 0 && (
